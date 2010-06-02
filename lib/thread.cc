@@ -166,44 +166,16 @@ static char *
 _thread_cleanup_author (notmuch_thread_t *thread,
 			const char *author, const char *from)
 {
-    char *clean_author,*test_author;
-    const char *comma;
-    char *blank;
-    int fname,lname;
+    char *clean_author;
+    const char *begin,*end;
 
     if (author == NULL)
 	return NULL;
-    clean_author = talloc_strdup(thread, author);
+    begin = strchr (from, '<') + 1;
+    end = strchr (begin, '>');
+    clean_author = talloc_strndup (thread, begin, end - begin);
     if (clean_author == NULL)
 	return NULL;
-    /* check if there's a comma in the name and that there's a
-     * component of the name behind it (so the name doesn't end with
-     * the comma - in which case the string that strchr finds is just
-     * one character long ",\0").
-     * Otherwise just return the copy of the original author name that
-     * we just made*/
-    comma = strchr(author,',');
-    if (comma && strlen(comma) > 1) {
-	/* let's assemble what we think is the correct name */
-	lname = comma - author;
-	fname = strlen(author) - lname - 2;
-	strncpy(clean_author, comma + 2, fname);
-	*(clean_author+fname) = ' ';
-	strncpy(clean_author + fname + 1, author, lname);
-	*(clean_author+fname+1+lname) = '\0';
-	/* make a temporary copy and see if it matches the email */
-	test_author = talloc_strdup(thread,clean_author);
-
-	blank=strchr(test_author,' ');
-	while (blank != NULL) {
-	    *blank = '.';
-	    blank=strchr(test_author,' ');
-	}
-	if (strcasestr(from, test_author) == NULL)
-	    /* we didn't identify this as part of the email address
-	    * so let's punt and return the original author */
-	    strcpy (clean_author, author);
-    }
     return clean_author;
 }
 
