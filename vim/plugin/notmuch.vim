@@ -260,7 +260,8 @@ function! s:NM_cmd_search_fmtline(line)
         let flist = []
         for at in split(m[4], ", ")
                 let p = min([stridx(at, "."), stridx(at, "@")])
-                call insert(flist, tolower(at[0:p - 1]))
+                let p = substitute(tolower(at[0:p - 1]), "^ext-", "", "")
+                call insert(flist, p)
         endfor
         let from = join(flist, ", ")
         return printf("%-12s %3s %-20.20s | %s (%s)", m[2], m[3], from, m[5], m[6])
