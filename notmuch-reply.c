@@ -447,6 +447,8 @@ notmuch_reply_format_default(void *ctx, notmuch_config_t *config, notmuch_query_
     notmuch_message_t *message;
     const char *subject, *from_addr = NULL;
     const char *in_reply_to, *orig_references, *references;
+    const char *message_id;
+    char *simple_from;
 
     for (messages = notmuch_query_search_messages (query);
 	 notmuch_messages_valid (messages);
@@ -476,6 +478,8 @@ notmuch_reply_format_default(void *ctx, notmuch_config_t *config, notmuch_query_
 	if (from_addr == NULL)
 	    from_addr = notmuch_config_get_user_primary_email (config);
 
+	simple_from = talloc_strdup (ctx, from_addr);
+
 	from_addr = talloc_asprintf (ctx, "%s <%s>",
 				     notmuch_config_get_user_name (config),
 				     from_addr);
@@ -495,6 +499,13 @@ notmuch_reply_format_default(void *ctx, notmuch_config_t *config, notmuch_query_
 				      in_reply_to);
 	g_mime_object_set_header (GMIME_OBJECT (reply),
 				  "References", references);
+
+	message_id = talloc_asprintf (ctx, "<%lu-notmuch-%s>",
+				      time(NULL),
+				      simple_from);
+	g_mime_object_set_header (GMIME_OBJECT (reply),
+				  "Message-ID", message_id);
+	talloc_free (simple_from);
 
 	show_reply_headers (reply);
 
