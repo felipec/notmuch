@@ -947,18 +947,23 @@ function! s:NM_compose_send()
         let line = getline(lnum)
         let lst_hdr = ''
         while match(line, '^$') == -1
-                if match(line, '^Notmuch-Help:') == -1
+                if !exists("hdr_starts") && match(line, '^Notmuch-Help:') == -1
                         let hdr_starts = lnum - 1
-                        break
                 endif
                 let lnum = lnum + 1
                 let line = getline(lnum)
         endwhile
+        let body_starts = lnum - 1
 
+        call append(body_starts, 'Date: ' . strftime('%a, %d %b %Y %H:%M:%S %z'))
         exec printf(':0,%dd', hdr_starts)
         write
 
-        let cmdtxt = 'mailx -t < ' . fname
+        let line = getline(1)
+        let m = matchlist(line, '^From:\s*\(.*\)\s*<\(.*\)>$')
+        let from = m[2]
+
+        let cmdtxt = '/usr/bin/msmtp -i -t -f ' . from . ' < ' . fname
         let out = system(cmdtxt)
         let err = v:shell_error
         if err
