@@ -447,7 +447,7 @@ notmuch_reply_format_default(void *ctx, notmuch_config_t *config, notmuch_query_
     notmuch_message_t *message;
     const char *subject, *from_addr = NULL;
     const char *in_reply_to, *orig_references, *references;
-    const char *message_id;
+    const char *message_id, *user_agent;
     char *simple_from;
 
     for (messages = notmuch_query_search_messages (query);
@@ -499,6 +499,11 @@ notmuch_reply_format_default(void *ctx, notmuch_config_t *config, notmuch_query_
 				      in_reply_to);
 	g_mime_object_set_header (GMIME_OBJECT (reply),
 				  "References", references);
+
+	user_agent = talloc_asprintf (ctx, "notmuch %s",
+				      STRINGIFY(NOTMUCH_VERSION));
+	g_mime_object_set_header (GMIME_OBJECT (reply),
+				  "User-Agent", user_agent);
 
 	message_id = talloc_asprintf (ctx, "<%lu-notmuch-%s>",
 				      time(NULL),
