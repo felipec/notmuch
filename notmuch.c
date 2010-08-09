@@ -312,6 +312,11 @@ command_t commands[] = {
       "\n"
       "\tSee \"notmuch help search-terms\" for details of the search\n"
       "\tterms syntax." },
+    { "compose", notmuch_compose_command,
+	NULL,
+	"Constructs an empty message.",
+	"\tConstructs a new empty message filling basic headers such as\n"
+	"\tFrom:, User-Agent: and Message-ID:." },
     { "tag", notmuch_tag_command,
       "+<tag>|-<tag> [...] [--] <search-terms> [...]",
       "Add/remove tags for all messages matching the search terms.",
