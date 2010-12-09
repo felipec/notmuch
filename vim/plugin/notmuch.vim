@@ -90,16 +90,6 @@ let s:notmuch_signature_defaults = [
         \ 'email sent from notmuch.vim plugin'
         \ ]
 
-" defaults for g:notmuch_compose_headers
-" override with: let g:notmuch_compose_headers = [ ... ]
-let s:notmuch_compose_headers_defaults = [
-        \ 'From',
-        \ 'To',
-        \ 'Cc',
-        \ 'Bcc',
-        \ 'Subject'
-        \ ]
-
 " --- keyboard mapping definitions {{{1
 
 " --- --- bindings for folders mode {{{2
@@ -888,56 +878,9 @@ endfunction
 " --- implement compose screen {{{1
 
 function! s:NM_cmd_compose(words, body_lines)
-        let lines = []
-        let start_on_line = 0
-
-        let hdrs = { }
-        for word in a:words
-                let m = matchlist(word, '^\(\w[^:]*\):\s*\(.*\)\s*$')
-                if !len(m)
-                        throw 'Eeek! bad parameter ''' . string(word) . ''''
-                endif
-                let key = substitute(m[1], '\<\w', '\U&', 'g')
-                if !has_key(hdrs, key)
-                        let hdrs[key] = []
-                endif
-                if strlen(m[2])
-                        call add(hdrs[key], m[2])
-                endif
-        endfor
-
-        if !has_key(hdrs, 'From') || !len(hdrs['From'])
-                let me = <SID>NM_compose_get_user_email()
-                let hdrs['From'] = [ me ]
-        endif
-
-        for key in g:notmuch_compose_headers
-                let text = has_key(hdrs, key) ? join(hdrs[key], ', ') : ''
-                call add(lines, key . ': ' . text)
-                if !start_on_line && !strlen(text)
-                        let start_on_line = len(lines)
-                endif
-        endfor
-
-        for [key,val] in items(hdrs)
-                if match(g:notmuch_compose_headers, key) == -1
-                        let line = key . ': ' . join(val, ', ')
-                        call add(lines, line)
-                endif
-        endfor
-
-        call add(lines, '')
-        if !start_on_line
-                let start_on_line = len(lines) + 1
-        endif
-
-        if len(a:body_lines)
-                call extend(lines, a:body_lines)
-        else
-                call extend(lines, [ '', '' ])
-        endif
-
-        call <SID>NM_newComposeBuffer(lines, start_on_line)
+        let data = <SID>NM_run(['compose'])
+        let lines = split(data, "\n")
+        call <SID>NM_newComposeBuffer(lines, 0)
 endfunction
 
 function! s:NM_compose_send()
@@ -1031,12 +974,6 @@ function! s:NM_compose_next_entry_area()
 endfunction
 
 " --- --- compose screen helper functions {{{2
-
-function! s:NM_compose_get_user_email()
-        let rname = system("getent passwd $USER | cut -d ':' -f 5")
-        let rname = substitute(rname, '\n*$', '', '')
-        return printf("%s <%s>", rname, $EMAIL)
-endfunction
 
 function! s:NM_compose_find_line_match(start, pattern, failure)
         let lnum = a:start
@@ -1323,9 +1260,6 @@ endif
 
 if !exists('g:notmuch_signature')
         let g:notmuch_signature = s:notmuch_signature_defaults
-endif
-if !exists('g:notmuch_compose_headers')
-        let g:notmuch_compose_headers = s:notmuch_compose_headers_defaults
 endif
 
 " --- assign keymaps {{{1
