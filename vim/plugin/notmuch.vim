@@ -1027,11 +1027,9 @@ endfunction
 " --- --- compose screen helper functions {{{2
 
 function! s:NM_compose_get_user_email()
-        let name = substitute(system('id -u -n'), '\v(^\s*|\s*$|\n)', '', 'g')
-        let fqdn = substitute(system('hostname -f'), '\v(^\s*|\s*$|\n)', '', 'g')
-
-        " TODO: do this properly
-        return name . '@' . fqdn
+        let rname = system("getent passwd $USER | cut -d ':' -f 5")
+        let rname = substitute(rname, '\n*$', '', '')
+        return printf("%s <%s>", rname, $EMAIL)
 endfunction
 
 function! s:NM_compose_find_line_match(start, pattern, failure)
