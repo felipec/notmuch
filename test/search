@@ -123,4 +123,10 @@ echo -n > expected &&
 notmuch search "no-message-matches-this" > actual &&
 test_cmp expected actual'
 
+test_begin_subtest "Search by from (tricky):"
+add_message '[subject]="search by from (tricky trick)"' '[date]="Sat, 01 Jan 2000 12:00:00 -0000"' '[from]=search-by-from-trick@foo.com'
+add_message '[subject]="search by from (tricky)"' '[date]="Sat, 01 Jan 2000 12:00:00 -0000"' '[from]=search-by-from@foo.com'
+output=$(notmuch search from:"search-by-from@" | notmuch_search_sanitize)
+test_expect_equal "$output" "thread:XXX   2000-01-01 [1/1] search-by-from@foo.com; search by from (tricky) (inbox unread)"
+
 test_done
