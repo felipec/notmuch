@@ -166,19 +166,17 @@ add_recipients_for_address_list (GMimeMessage *message,
 					     type, group_list);
 	} else {
 	    InternetAddressMailbox *mailbox;
-	    const char *name;
 	    const char *addr;
 
 	    mailbox = INTERNET_ADDRESS_MAILBOX (address);
 
-	    name = internet_address_get_name (address);
 	    addr = internet_address_mailbox_get_addr (mailbox);
 
 	    if (address_is_users (addr, config)) {
 		if (ret == NULL)
 		    ret = addr;
 	    } else {
-		g_mime_message_add_recipient (message, type, name, addr);
+		g_mime_message_add_recipient (message, type, NULL, addr);
 	    }
 	}
     }
@@ -439,6 +437,20 @@ guess_from_received_header (notmuch_config_t *config, notmuch_message_t *message
     return NULL;
 }
 
+static char *
+tmp_cleanup_addr (void *ctx, const char *addr)
+{
+    char *clean_author;
+    const char *begin,*end;
+
+    begin = strchr (addr, '<') + 1;
+    end = strchr (begin, '>');
+    clean_author = talloc_strndup (ctx, begin, end - begin);
+    if (clean_author == NULL)
+	return NULL;
+    return clean_author;
+}
+
 static int
 notmuch_reply_format_default(void *ctx, notmuch_config_t *config, notmuch_query_t *query)
 {
@@ -448,7 +460,7 @@ notmuch_reply_format_default(void *ctx, notmuch_config_t *config, notmuch_query_
     const char *subject, *from_addr = NULL;
     const char *in_reply_to, *orig_references, *references;
     const char *message_id, *user_agent;
-    char *simple_from;
+    char *simple_from, *author;
 
     for (messages = notmuch_query_search_messages (query);
 	 notmuch_messages_valid (messages);
@@ -517,9 +529,9 @@ notmuch_reply_format_default(void *ctx, notmuch_config_t *config, notmuch_query_
 	g_object_unref (G_OBJECT (reply));
 	reply = NULL;
 
-	printf ("On %s, %s wrote:\n",
-		notmuch_message_get_header (message, "date"),
-		notmuch_message_get_header (message, "from"));
+	author = tmp_cleanup_addr (ctx, notmuch_message_get_header (message, "from"));
+	printf ("%s wrote:\n", author);
+	talloc_free (author);
 
 	show_message_body (notmuch_message_get_filename (message), reply_part);
 
