@@ -93,6 +93,9 @@ int
 notmuch_reply_command (void *ctx, int argc, char *argv[]);
 
 int
+notmuch_compose_command (void *ctx, int argc, char *argv[]);
+
+int
 notmuch_restore_command (void *ctx, int argc, char *argv[]);
 
 int
